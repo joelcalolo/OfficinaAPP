@@ -8,6 +8,7 @@ use App\Http\Controllers\ViaturaController;
 use App\Http\Controllers\ServicoController;
 use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\ServicoPrestadoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,3 +73,5 @@ Route::prefix('relatorios')->group(function () {
     Route::get('/servicos', [RelatorioController::class, 'relatorioServicos']); // Relatório de serviços
 });
 
+//Rotas de servicos prestados
+Route::post('/servicos-prestados', [ServicoPrestadoController::class, 'store']);

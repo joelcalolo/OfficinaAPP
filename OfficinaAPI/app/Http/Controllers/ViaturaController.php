@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Viatura;
 use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ViaturaController extends Controller
 {
@@ -88,7 +89,7 @@ class ViaturaController extends Controller
         return response()->json(['message' => 'Viatura deletada com sucesso']);
     }
 
-     /**
+ /**
      * Gerar código QR para uma viatura concluída.
      */
     public function gerarQrCode($id)

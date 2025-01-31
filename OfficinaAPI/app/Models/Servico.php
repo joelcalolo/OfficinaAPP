@@ -22,7 +22,7 @@ class Servico extends Model
 
     public function viaturas()
     {
-        return $this->belongsToMany(Viatura::class, 'viatura_servico');
+        return $this->belongsToMany(Viatura::class, 'viatura_servico')->withPivot('data');
     }
 
     public function pagamentos()

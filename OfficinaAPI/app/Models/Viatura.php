@@ -31,9 +31,9 @@ class Viatura extends Model
 
     public function servicos()
     {
-        return $this->belongsToMany(Servico::class, 'viatura_servico');
+        return $this->belongsToMany(Servico::class, 'viatura_servico')->withPivot('data');
     }
-
+    
     public function pagamentos()
     {
         return $this->hasMany(Pagamento::class, 'viatura_id');
