@@ -21,6 +21,7 @@ class Viatura extends Model
         'tipo_avaria',
         'estado',
         'codigo_validacao',
+        'cliente_id',
     ];
 
     public function cliente()

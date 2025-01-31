@@ -2,35 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
-    use HasFactory;
+    protected $table = 'usuarios'; // Define o nome da tabela
+    protected $fillable = ['nome', 'email', 'senha', 'role', 'documento']; // Campos que podem ser preenchidos
+    protected $hidden = ['senha', 'remember_token']; // Campos ocultos
 
-    /**
-     * Os atributos que podem ser preenchidos em massa.
-     *
-     * @var array
-     */
-    protected $fillable = [
-        'nome',
-        'email',
-        'senha',
-        'role',
-        'documento',
-    ];
-
-       /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'senha',
-        'remember_token',
-    ];
-
-    
+    public function getAuthPassword()
+    {
+        return $this->senha; // Define o campo de senha como 'senha'
+    }
 }

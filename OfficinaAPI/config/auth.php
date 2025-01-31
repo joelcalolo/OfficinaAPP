@@ -14,8 +14,8 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
-        'passwords' => 'users',
+        'guard' => 'web', // Guard padrão (pode ser 'web' ou 'api')
+        'passwords' => 'usuarios', // Provider de senha padrão
     ],
 
     /*
@@ -37,8 +37,13 @@ return [
 
     'guards' => [
         'web' => [
-            'driver' => 'session',
-            'provider' => 'users',
+            'driver' => 'session', // Usa sessões para autenticação
+            'provider' => 'usuarios', // Define o provider como 'usuarios'
+        ],
+
+        'api' => [
+            'driver' => 'session', // Ou 'token' se estiver usando autenticação por token
+            'provider' => 'usuarios', // Define o provider como 'usuarios'
         ],
     ],
 
@@ -60,14 +65,14 @@ return [
     */
 
     'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+        'usuarios' => [ // Nome do provider (deve corresponder ao usado nos guards)
+            'driver' => 'eloquent', // Usa o Eloquent ORM
+            'model' => App\Models\Usuario::class, // Modelo que representa a tabela 'usuarios'
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
+        // 'users' => [ // Provider padrão (comentado ou removido)
+        //     'driver' => 'eloquent',
+        //     'model' => App\Models\User::class,
         // ],
     ],
 
@@ -91,11 +96,11 @@ return [
     */
 
     'passwords' => [
-        'users' => [
-            'provider' => 'users',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
+        'usuarios' => [ // Nome do provider de senha (deve corresponder ao provider de usuários)
+            'provider' => 'usuarios', // Define o provider de usuários
+            'table' => 'password_reset_tokens', // Tabela para tokens de redefinição de senha
+            'expire' => 60, // Tempo de expiração do token em minutos
+            'throttle' => 60, // Tempo de espera antes de gerar um novo token
         ],
     ],
 
@@ -110,6 +115,6 @@ return [
     |
     */
 
-    'password_timeout' => 10800,
+    'password_timeout' => 10800, // Tempo de expiração da confirmação de senha em segundos
 
 ];
