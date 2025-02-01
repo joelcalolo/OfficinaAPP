@@ -75,3 +75,4 @@ Route::prefix('relatorios')->group(function () {
 
 //Rotas de servicos prestados
 Route::post('/servicos-prestados', [ServicoPrestadoController::class, 'store']);
+

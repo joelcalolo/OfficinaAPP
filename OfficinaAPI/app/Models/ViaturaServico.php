@@ -13,8 +13,21 @@ class ViaturaServico extends Model
     protected $table = 'viatura_servico';
 
     protected $fillable = [
-        'viatura_id',
+        'servico_prestado_id',
         'servico_id',
-        'data',
+        'quantidade',
+        'valor_unitario',
     ];
+
+        // Relação com a tabela servicos_prestados
+        public function servicoPrestado()
+        {
+            return $this->belongsTo(ServicoPrestado::class);
+        }
+    
+        // Relação com a tabela servicos
+        public function servico()
+        {
+            return $this->belongsTo(Servico::class);
+        }
 }

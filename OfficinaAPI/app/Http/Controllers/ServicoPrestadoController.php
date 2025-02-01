@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\ServicoPrestado;
+use App\Models\ViaturaServico;
 use App\Models\Viatura;
 use App\Models\Servico;
-use App\Models\ViaturaServico;
 
 class ServicoPrestadoController extends Controller
 {
@@ -16,25 +17,37 @@ class ServicoPrestadoController extends Controller
     {
         $request->validate([
             'viatura_id' => 'required|exists:viaturas,id',
-            'servico_id' => 'required|exists:servicos,id',
             'data' => 'required|date',
+            'tecnico' => 'nullable|string|max:255',
+            'observacoes' => 'nullable|string',
+            'servicos' => 'required|array',
+            'servicos.*.servico_id' => 'required|exists:servicos,id',
+            'servicos.*.quantidade' => 'required|integer|min:1',
+            'servicos.*.valor_unitario' => 'required|numeric|min:0',
         ]);
-
-        // Verifica se a viatura e o serviço existem
-        $viatura = Viatura::find($request->viatura_id);
-        $servico = Servico::find($request->servico_id);
-
-        if (!$viatura || !$servico) {
-            return response()->json(['message' => 'Viatura ou serviço não encontrado'], 404);
-        }
-
-        // Registra o serviço prestado na tabela de relação
-        $viaturaServico = ViaturaServico::create([
-            'viatura_id' => $request->viatura_id,
-            'servico_id' => $request->servico_id,
+    
+        // Cria o serviço prestado
+        $servicoPrestado = ServicoPrestado::create([
+            'viatura_id' => $request->viatura_id, // viatura_id vai para a tabela servicos_prestados
             'data' => $request->data,
+            'tecnico' => $request->tecnico,
+            'observacoes' => $request->observacoes,
+            'valor_total' => 0, // Inicializa o valor total como 0
         ]);
-
-        return response()->json($viaturaServico, 201);
+    
+        // Adiciona os serviços ao serviço prestado
+        foreach ($request->servicos as $servico) {
+            ViaturaServico::create([
+                'servico_prestado_id' => $servicoPrestado->id, // Relaciona com servicos_prestados
+                'servico_id' => $servico['servico_id'],
+                'quantidade' => $servico['quantidade'],
+                'valor_unitario' => $servico['valor_unitario'],
+            ]);
+        }
+    
+        // Calcula o valor total do serviço prestado
+        $servicoPrestado->calcularValorTotal();
+    
+        return response()->json($servicoPrestado, 201);
     }
 }
