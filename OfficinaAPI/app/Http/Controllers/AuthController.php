@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Usuario;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
     /**
-     * Registra um novo usuário.
+     * Registrar um novo usuário.
      */
     public function register(Request $request)
     {
@@ -24,46 +25,62 @@ class AuthController extends Controller
         $usuario = Usuario::create([
             'nome' => $request->nome,
             'email' => $request->email,
-            'senha' => bcrypt($request->senha),
+            'senha' => Hash::make($request->senha), // Criptografa a senha
             'role' => $request->role,
             'documento' => $request->documento,
         ]);
 
-        return response()->json(['message' => 'Usuário registrado com sucesso'], 201);
+        // Cria um token de acesso para o usuário
+        $token = $usuario->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Usuário registrado com sucesso',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ], 201);
     }
 
     /**
-     * Autentica o usuário e inicia a sessão.
+     * Fazer login.
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'email' => 'required|string|email',
             'senha' => 'required|string',
         ]);
 
-        if (Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['senha']])) {
-            $request->session()->regenerate();
-            return response()->json(['message' => 'Login realizado com sucesso'], 200);
+        // Verifica as credenciais
+        if (!Auth::attempt(['email' => $request->email, 'password' => $request->senha])) {
+            return response()->json(['message' => 'Credenciais inválidas'], 401);
         }
 
-        return response()->json(['message' => 'Credenciais inválidas'], 401);
+        // Obtém o usuário autenticado
+        $usuario = Usuario::where('email', $request->email)->firstOrFail();
+
+        // Cria um token de acesso para o usuário
+        $token = $usuario->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login realizado com sucesso',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
     }
 
     /**
-     * Encerra a sessão do usuário.
+     * Fazer logout.
      */
     public function logout(Request $request)
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Revoga todos os tokens do usuário
+        $request->user()->tokens()->delete();
 
-        return response()->json(['message' => 'Logout realizado com sucesso'], 200);
+        return response()->json(['message' => 'Logout realizado com sucesso']);
     }
 
     /**
-     * Retorna os dados do usuário autenticado.
+     * Obter informações do usuário autenticado.
      */
     public function user(Request $request)
     {

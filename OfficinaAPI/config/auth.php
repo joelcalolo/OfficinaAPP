@@ -2,6 +2,11 @@
 
 return [
 
+    'api' => [
+    'driver' => 'sanctum',
+    'provider' => 'usuarios',
+],
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults
@@ -117,4 +122,5 @@ return [
 
     'password_timeout' => 10800, // Tempo de expiração da confirmação de senha em segundos
 
+        
 ];

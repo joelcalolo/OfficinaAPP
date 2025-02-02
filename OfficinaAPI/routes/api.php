@@ -14,11 +14,6 @@ use App\Http\Controllers\ServicoPrestadoController;
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -34,10 +29,14 @@ Route::prefix('usuarios')->group(function () {
     Route::delete('/{id}', [UsuarioController::class, 'destroy']); // Deletar um usuário
 });
 
+
+
 Route::post('/registrar', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
-Route::get('/user', [AuthController::class, 'user'])->middleware('auth');
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'user']);
+});
 
 //Rotas para VIATURAS
 Route::prefix('viaturas')->group(function () {
