@@ -9,6 +9,8 @@ use App\Http\Controllers\ServicoController;
 use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\ServicoPrestadoController;
+use App\Http\Controllers\OrdemServicoController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -75,3 +77,6 @@ Route::prefix('relatorios')->group(function () {
 //Rotas de servicos prestados
 Route::post('/servicos-prestados', [ServicoPrestadoController::class, 'store']);
 
+Route::post('/ordens-servico', [OrdemServicoController::class, 'store']);
+Route::get('/ordens-servico', [OrdemServicoController::class, 'index']);
+Route::get('/ordens-servico/{id}', [OrdemServicoController::class, 'show']);

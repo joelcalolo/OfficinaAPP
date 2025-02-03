@@ -16,4 +16,8 @@ class Usuario extends Authenticatable
     {
         return $this->senha; // Define o campo de senha como 'senha'
     }
+    public function veiculos(){
+        return 
+        $this->hasMany(Viatura::class);
+    }
 }

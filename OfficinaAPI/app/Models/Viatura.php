@@ -38,4 +38,8 @@ class Viatura extends Model
     {
         return $this->hasMany(Pagamento::class, 'viatura_id');
     }
+    public function ordensServico()
+    {
+        return $this->hasMany(OrdemServico::class);
+    }
 }

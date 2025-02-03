@@ -29,4 +29,9 @@ class Servico extends Model
     {
         return $this->hasMany(Pagamento::class, 'servico_id');
     }
+
+    public function ordensServico()
+    {
+        return $this->hasMany(OrdemServicoServico::class);
+    }
 }

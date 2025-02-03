@@ -1,7 +1,7 @@
 // src/pages/RegistrarServicosPrestados.jsx
 
 import { useEffect, useState } from 'react';
-import { Container, Form, Button, Alert } from 'react-bootstrap';
+import { Container, Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import axios from 'axios';
 
 const RegistrarServicosPrestados = () => {
@@ -13,14 +13,27 @@ const RegistrarServicosPrestados = () => {
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
 
+  useEffect(() => {
+    // Implementar lógica para carregar dados, se necessário no futuro
+  }, []);
+
   const handleAddServico = () => {
     setServicos([...servicos, { servico_id: '', quantidade: 0, valor_unitario: 0 }]);
   };
 
   const handleServicoChange = (index, field, value) => {
-    const newServicos = [...servicos];
-    newServicos[index][field] = value;
-    setServicos(newServicos);
+    const updatedServicos = servicos.map((servico, i) => 
+      i === index ? { ...servico, [field]: value } : servico
+    );
+    setServicos(updatedServicos);
+  };
+
+  const resetForm = () => {
+    setViaturaId('');
+    setData('');
+    setTecnico('');
+    setObservacoes('');
+    setServicos([{ servico_id: '', quantidade: 0, valor_unitario: 0 }]);
   };
 
   const handleSubmit = async (e) => {
@@ -37,19 +50,31 @@ const RegistrarServicosPrestados = () => {
           'Content-Type': 'application/json',
         },
       });
+  
       setSuccess('Serviço prestado registrado com sucesso!');
       setError(null);
-      // Reset the form
+  
+      // Resetar o formulário
       setViaturaId('');
       setData('');
       setTecnico('');
       setObservacoes('');
       setServicos([{ servico_id: '', quantidade: 0, valor_unitario: 0 }]);
+  
     } catch (err) {
-      setError('Erro ao registrar serviço prestado.');
-      console.error(err);
+      if (err.response) {
+        console.error('Erro no backend:', err.response.data);
+        setError(`Erro: ${JSON.stringify(err.response.data)}`);
+      } else if (err.request) {
+        console.error('Erro de conexão com o servidor:', err.request);
+        setError('Erro de conexão com o servidor.');
+      } else {
+        console.error('Erro desconhecido:', err.message);
+        setError(`Erro desconhecido: ${err.message}`);
+      }
     }
   };
+  
 
   return (
     <Container>
@@ -58,25 +83,30 @@ const RegistrarServicosPrestados = () => {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="formViaturaId">
-          <Form.Label>Viatura ID</Form.Label>
-          <Form.Control
-            type="number"
-            value={viaturaId}
-            onChange={(e) => setViaturaId(e.target.value)}
-            required
-          />
-        </Form.Group>
-
-        <Form.Group controlId="formData">
-          <Form.Label>Data</Form.Label>
-          <Form.Control
-            type="datetime-local"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-            required
-          />
-        </Form.Group>
+        <Row>
+          <Col md={6}>
+            <Form.Group controlId="formViaturaId">
+              <Form.Label>Viatura ID</Form.Label>
+              <Form.Control
+                type="number"
+                value={viaturaId}
+                onChange={(e) => setViaturaId(e.target.value)}
+                required
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group controlId="formData">
+              <Form.Label>Data</Form.Label>
+              <Form.Control
+                type="datetime-local"
+                value={data}
+                onChange={(e) => setData(e.target.value)}
+                required
+              />
+            </Form.Group>
+          </Col>
+        </Row>
 
         <Form.Group controlId="formTecnico">
           <Form.Label>Técnico</Form.Label>
@@ -97,42 +127,49 @@ const RegistrarServicosPrestados = () => {
           />
         </Form.Group>
 
-        <h5>Serviços</h5>
+        <h5 className="mt-4">Serviços</h5>
         {servicos.map((servico, index) => (
-          <div key={index} className="mb-3">
-            <Form.Group controlId={`formServicoId${index}`}>
-              <Form.Label>Serviço ID</Form.Label>
-              <Form.Control
-                type="number"
-                value={servico.servico_id}
-                onChange={(e) => handleServicoChange(index, 'servico_id', e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Form.Group controlId={`formQuantidade${index}`}>
-              <Form.Label>Quantidade</Form.Label>
-              <Form.Control
-                type="number"
-                value={servico.quantidade}
-                onChange={(e) => handleServicoChange(index, 'quantidade', e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Form.Group controlId={`formValorUnitario${index}`}>
-              <Form.Label>Valor Unitário</Form.Label>
-              <Form.Control
-                type="number"
-                value={servico.valor_unitario}
-                onChange={(e) => handleServicoChange(index, 'valor_unitario', e.target.value)}
-                required
-              />
-            </Form.Group>
-          </div>
+          <Row key={index} className="mb-3">
+            <Col md={4}>
+              <Form.Group controlId={`formServicoId${index}`}>
+                <Form.Label>Serviço ID</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={servico.servico_id}
+                  onChange={(e) => handleServicoChange(index, 'servico_id', e.target.value)}
+                  required
+                />
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group controlId={`formQuantidade${index}`}>
+                <Form.Label>Quantidade</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={servico.quantidade}
+                  onChange={(e) => handleServicoChange(index, 'quantidade', e.target.value)}
+                  required
+                />
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group controlId={`formValorUnitario${index}`}>
+                <Form.Label>Valor Unitário</Form.Label>
+                <Form.Control
+                  type="number"
+                  value={servico.valor_unitario}
+                  onChange={(e) => handleServicoChange(index, 'valor_unitario', e.target.value)}
+                  required
+                />
+              </Form.Group>
+            </Col>
+          </Row>
         ))}
-        <Button variant="secondary" onClick={handleAddServico}>
+
+        <Button variant="secondary" onClick={handleAddServico} className="me-2">
           Adicionar Serviço
         </Button>
-        <Button variant="primary" type="submit" className="ms-2">
+        <Button variant="primary" type="submit">
           Registrar
         </Button>
       </Form>

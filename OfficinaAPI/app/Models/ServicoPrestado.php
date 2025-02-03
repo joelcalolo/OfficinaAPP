@@ -26,10 +26,6 @@ class ServicoPrestado extends Model
     }
 
     // Relação com a tabela viatura_servico
-    public function servicos()
-    {
-        return $this->hasMany(ViaturaServico::class);
-    }
 
     // Método para calcular o valor total do serviço prestado
     public function calcularValorTotal()

@@ -4,7 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import Viaturas from './pages/viaturas';
 import Servicos from './pages/Servicos';
-import ServicosPrestados from './pages/ServicosPrestados';
+import ServicosPrestados from './pages/OrdensServicos';
 
 function App() {
   return (
