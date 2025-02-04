@@ -30,15 +30,7 @@
                         <td>{{ $usuario->nome }}</td>
                         <td>{{ $usuario->email }}</td>
                         <td>{{ ucfirst($usuario->role) }}</td>
-                        <td>
-                            @if($usuario->documento)
-                                <a href="{{ route('usuarios.download-documento', $usuario->id) }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-download"></i> Download
-                                </a>
-                            @else
-                                <span class="text-muted">Não enviado</span>
-                            @endif
-                        </td>
+                        <td>{{ $usuario->documento }}</td>
                         <td>{{ $usuario->created_at->format('d/m/Y') }}</td>
                         <td>
                             <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewUserModal{{ $usuario->id }}">
@@ -67,7 +59,7 @@
                 <h5 class="modal-title">Novo Usuário</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ route('usuarios.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('usuarios.store') }}" method="POST">
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
@@ -93,9 +85,9 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="documento" class="form-label">Documento de Identificação (PDF)</label>
-                        <input type="file" class="form-control" id="documento" name="documento" accept=".pdf" required>
-                        <small class="text-muted">Tamanho máximo: 2MB</small>
+                        <label for="documento" class="form-label">Documento</label>
+                        <input type="text" class="form-control" id="documento" name="documento" required>
+                        <small class="text-muted">Insira o número do documento</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -120,17 +112,8 @@
                 <p><strong>Nome:</strong> {{ $usuario->nome }}</p>
                 <p><strong>Email:</strong> {{ $usuario->email }}</p>
                 <p><strong>Função:</strong> {{ ucfirst($usuario->role) }}</p>
+                <p><strong>Documento:</strong> {{ $usuario->documento }}</p>
                 <p><strong>Data de Cadastro:</strong> {{ $usuario->created_at->format('d/m/Y H:i') }}</p>
-                <p>
-                    <strong>Documento:</strong>
-                    @if($usuario->documento)
-                        <a href="{{ route('usuarios.download-documento', $usuario->id) }}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-download"></i> Download
-                        </a>
-                    @else
-                        <span class="text-muted">Não enviado</span>
-                    @endif
-                </p>
             </div>
         </div>
     </div>
@@ -144,7 +127,7 @@
                 <h5 class="modal-title">Editar Usuário</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
@@ -171,16 +154,9 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="documento" class="form-label">Documento de Identificação (PDF)</label>
-                        @if($usuario->documento)
-                            <div class="mb-2">
-                                <a href="{{ route('usuarios.download-documento', $usuario->id) }}" class="btn btn-sm btn-primary">
-                                    <i class="fas fa-download"></i> Download do documento atual
-                                </a>
-                            </div>
-                        @endif
-                        <input type="file" class="form-control" id="documento" name="documento" accept=".pdf">
-                        <small class="text-muted">Tamanho máximo: 2MB. Deixe em branco para manter o documento atual.</small>
+                        <label for="documento" class="form-label">Documento</label>
+                        <input type="text" class="form-control" id="documento" name="documento" value="{{ $usuario->documento }}" required>
+                        <small class="text-muted">Insira o número do documento</small>
                     </div>
                 </div>
                 <div class="modal-footer">

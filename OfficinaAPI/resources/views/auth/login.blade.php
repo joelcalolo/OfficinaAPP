@@ -48,13 +48,23 @@
             
             <div class="card shadow">
                 <div class="card-body">
-                    @if(session('error'))
+                    @if($errors->any())
                         <div class="alert alert-danger">
-                            {{ session('error') }}
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ url('/login') }}">
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    <form method="POST" action="{{ route('login') }}">
                         @csrf
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
@@ -62,7 +72,7 @@
                                 <span class="input-group-text">
                                     <i class="fas fa-envelope"></i>
                                 </span>
-                                <input type="email" class="form-control" id="email" name="email" required autofocus>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required autofocus>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -74,17 +84,64 @@
                                 <input type="password" class="form-control" id="senha" name="senha" required>
                             </div>
                         </div>
-                        <div class="d-grid">
+                        <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-sign-in-alt"></i> Entrar
                             </button>
                         </div>
                     </form>
+
+                    <div class="mt-3 text-center">
+                        <p class="mb-0">Não tem uma conta? 
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal">Registre-se</a>
+                        </p>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="text-center mt-3">
-                <small class="text-muted">&copy; {{ date('Y') }} Sistema de Gestão de Oficina</small>
+    <!-- Modal de Registro -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Registrar Nova Conta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('register') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="nome" name="nome" value="{{ old('nome') }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha" class="form-label">Senha</label>
+                            <input type="password" class="form-control" id="senha" name="senha" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Tipo de Conta</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="cliente">Cliente</option>
+                                <option value="tecnico">Técnico</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="documento" class="form-label">Documento</label>
+                            <input type="text" class="form-control" id="documento" name="documento" value="{{ old('documento') }}" required>
+                            <small class="text-muted">Insira o número do seu documento de identificação</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Registrar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

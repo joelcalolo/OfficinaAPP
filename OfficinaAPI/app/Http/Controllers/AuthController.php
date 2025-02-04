@@ -11,32 +11,33 @@ class AuthController extends Controller
 {
     public function register(Request $request)
     {
-        $request->validate([
-            'nome' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:usuarios',
-            'senha' => 'required|string|min:8',
-            'role' => 'required|string',
-            'documento' => 'required|file|mimes:pdf|max:2048',
-        ]);
+        try {
+            $request->validate([
+                'nome' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:usuarios',
+                'senha' => 'required|string|min:8',
+                'role' => 'required|string',
+                'documento' => 'required|string|unique:usuarios',
+            ]);
 
-        // Upload do documento
-        $documentoPath = null;
-        if ($request->hasFile('documento')) {
-            $documentoPath = $request->file('documento')->store('documentos', 'public');
+            $usuario = Usuario::create([
+                'nome' => $request->nome,
+                'email' => $request->email,
+                'senha' => Hash::make($request->senha),
+                'role' => $request->role,
+                'documento' => $request->documento,
+            ]);
+
+            // Log the user in after registration
+            Auth::login($usuario);
+
+            return redirect()->route('dashboard')
+                ->with('success', 'Usuário registrado com sucesso!');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Erro ao registrar usuário: ' . $e->getMessage()]);
         }
-
-        $usuario = Usuario::create([
-            'nome' => $request->nome,
-            'email' => $request->email,
-            'senha' => Hash::make($request->senha),
-            'role' => $request->role,
-            'documento' => $documentoPath,
-        ]);
-
-        return response()->json([
-            'message' => 'Usuário registrado com sucesso',
-            'usuario' => $usuario
-        ], 201);
     }
 
     public function login(Request $request)
@@ -47,7 +48,9 @@ class AuthController extends Controller
         ]);
 
         if (!Auth::attempt(['email' => $request->email, 'password' => $request->senha])) {
-            return back()->with('error', 'Credenciais inválidas');
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Credenciais inválidas']);
         }
 
         return redirect()->route('dashboard');
