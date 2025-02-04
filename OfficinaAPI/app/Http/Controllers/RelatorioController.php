@@ -2,59 +2,58 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Viatura;
-use App\Models\Servico;
 use Illuminate\Http\Request;
+use App\Models\Usuario;
+use App\Models\Viatura;
+use App\Models\OrdemServico;
 
 class RelatorioController extends Controller
 {
-    /**
-     * Gerar relatório de viaturas.
-     */
-    public function relatorioViaturas()
+    public function index()
     {
-        // Exemplo: Listar todas as viaturas com seus serviços associados
-        $viaturas = Viatura::with('servicos')->get();
+        $viaturas = Viatura::all();
+        $clientes = Usuario::where('role', 'cliente')->get();
+        $tecnicos = Usuario::where('role', 'tecnico')->get();
 
-        // Formatar os dados para o relatório
-        $relatorio = $viaturas->map(function ($viatura) {
-            return [
-                'id' => $viatura->id,
-                'marca' => $viatura->marca,
-                'modelo' => $viatura->modelo,
-                'estado' => $viatura->estado,
-                'servicos' => $viatura->servicos->map(function ($servico) {
-                    return [
-                        'id' => $servico->id,
-                        'nome' => $servico->nome,
-                        'preco' => $servico->preco,
-                    ];
-                }),
-            ];
-        });
-
-        return response()->json($relatorio);
+        return view('relatorios.index', compact('viaturas', 'clientes', 'tecnicos'));
     }
 
-    /**
-     * Gerar relatório de serviços.
-     */
-    public function relatorioServicos()
+    public function gerarRelatorio(Request $request)
     {
-        // Exemplo: Listar todos os serviços com o número de viaturas associadas
-        $servicos = Servico::withCount('viaturas')->get();
+        $query = OrdemServico::with(['viatura', 'viatura.cliente', 'mecanico', 'servicos']);
 
-        // Formatar os dados para o relatório
-        $relatorio = $servicos->map(function ($servico) {
-            return [
-                'id' => $servico->id,
-                'nome' => $servico->nome,
-                'descricao' => $servico->descricao,
-                'preco' => $servico->preco,
-                'numero_viaturas' => $servico->viaturas_count,
-            ];
-        });
+        if ($request->data_inicio) {
+            $query->whereDate('data_servico', '>=', $request->data_inicio);
+        }
 
-        return response()->json($relatorio);
+        if ($request->data_fim) {
+            $query->whereDate('data_servico', '<=', $request->data_fim);
+        }
+
+        if ($request->viatura_id) {
+            $query->where('viatura_id', $request->viatura_id);
+        }
+
+        if ($request->cliente_id) {
+            $query->whereHas('viatura', function($q) use ($request) {
+                $q->where('cliente_id', $request->cliente_id);
+            });
+        }
+
+        if ($request->tecnico_id) {
+            $query->where('mecanico_id', $request->tecnico_id);
+        }
+
+        $ordens = $query->get();
+
+        return response()->json([
+            'html' => view('relatorios.partials.resultado', compact('ordens'))->render()
+        ]);
+    }
+
+    public function exportarPDF(Request $request)
+    {
+        // Implementar a lógica de exportação para PDF
+        // Você precisará de um pacote como dompdf ou similar
     }
 }

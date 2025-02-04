@@ -3,23 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Viatura;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ViaturaController extends Controller
 {
-    /**
-     * Listar todas as viaturas.
-     */
     public function index()
     {
-        $viaturas = Viatura::all();
-        return response()->json($viaturas);
+        $viaturas = Viatura::with('cliente')->get();
+        return view('viaturas.index', compact('viaturas'));
     }
 
-    /**
-     * Criar uma nova viatura.
-     */
+    public function create()
+    {
+        $clientes = Usuario::where('role', 'cliente')->get();
+        return view('viaturas.create', compact('clientes'));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -34,84 +35,72 @@ class ViaturaController extends Controller
 
         $viatura = Viatura::create($request->all());
 
-        return response()->json($viatura, 201);
+        return redirect()->route('viaturas.index')
+            ->with('success', 'Viatura cadastrada com sucesso!');
     }
 
-    /**
-     * Obter detalhes de uma viatura.
-     */
     public function show($id)
     {
-        $viatura = Viatura::find($id);
-        if (!$viatura) {
-            return response()->json(['message' => 'Viatura não encontrada'], 404);
-        }
-        return response()->json($viatura);
+        $viatura = Viatura::with(['cliente', 'ordensServico.servicos.servico', 'ordensServico.mecanico'])
+            ->findOrFail($id);
+        return view('viaturas.show', compact('viatura'));
     }
 
-    /**
-     * Atualizar uma viatura.
-     */
+    public function edit($id)
+    {
+        $viatura = Viatura::findOrFail($id);
+        $clientes = Usuario::where('role', 'cliente')->get();
+        return view('viaturas.edit', compact('viatura', 'clientes'));
+    }
+
     public function update(Request $request, $id)
     {
-        $viatura = Viatura::find($id);
-        if (!$viatura) {
-            return response()->json(['message' => 'Viatura não encontrada'], 404);
-        }
-
         $request->validate([
-            'marca' => 'sometimes|string|max:255',
-            'modelo' => 'sometimes|string|max:255',
-            'cor' => 'sometimes|string|max:255',
-            'tipo_avaria' => 'sometimes|string|max:255',
-            'estado' => 'sometimes|string|max:255',
-            'codigo_validacao' => 'sometimes|string|max:255|unique:viaturas,codigo_validacao,' . $viatura->id,
-            'cliente_id' => 'sometimes|exists:usuarios,id',
+            'marca' => 'required|string|max:255',
+            'modelo' => 'required|string|max:255',
+            'cor' => 'required|string|max:255',
+            'tipo_avaria' => 'required|string|max:255',
+            'estado' => 'required|string|max:255',
+            'codigo_validacao' => 'required|string|max:255|unique:viaturas,codigo_validacao,'.$id,
+            'cliente_id' => 'required|exists:usuarios,id',
         ]);
 
+        $viatura = Viatura::findOrFail($id);
         $viatura->update($request->all());
 
-        return response()->json($viatura);
+        return redirect()->route('viaturas.index')
+            ->with('success', 'Viatura atualizada com sucesso!');
     }
 
-    /**
-     * Excluir uma viatura.
-     */
     public function destroy($id)
     {
-        $viatura = Viatura::find($id);
-        if (!$viatura) {
-            return response()->json(['message' => 'Viatura não encontrada'], 404);
-        }
-
+        $viatura = Viatura::findOrFail($id);
         $viatura->delete();
 
-        return response()->json(['message' => 'Viatura deletada com sucesso']);
+        return redirect()->route('viaturas.index')
+            ->with('success', 'Viatura excluída com sucesso!');
     }
 
- /**
-     * Gerar código QR para uma viatura concluída.
-     */
     public function gerarQrCode($id)
     {
-        $viatura = Viatura::find($id);
+        $viatura = Viatura::findOrFail($id);
 
-        if (!$viatura) {
-            return response()->json(['message' => 'Viatura não encontrada'], 404);
-        }
-
-        // Verifica se a viatura está concluída
         if ($viatura->estado !== 'Concluído') {
             return response()->json(['message' => 'A viatura não está concluída'], 400);
         }
 
-        // Gera o conteúdo do QR Code (pode ser um link, texto, etc.)
         $qrContent = "Viatura ID: {$viatura->id}\nMarca: {$viatura->marca}\nModelo: {$viatura->modelo}\nEstado: {$viatura->estado}";
-
-        // Gera o QR Code em formato PNG
         $qrCode = QrCode::format('png')->size(300)->generate($qrContent);
 
-        // Retorna o QR Code como resposta
         return response($qrCode)->header('Content-Type', 'image/png');
+    }
+
+    public function minhasViaturas()
+    {
+        $viaturas = Viatura::with(['ordensServico.servicos.servico'])
+            ->where('cliente_id', auth()->id())
+            ->get();
+        
+        return view('viaturas.minhas-viaturas', compact('viaturas'));
     }
 }

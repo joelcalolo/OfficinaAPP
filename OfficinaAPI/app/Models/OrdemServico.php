@@ -9,33 +9,36 @@ class OrdemServico extends Model
 {
     use HasFactory;
 
-    // Definindo os campos que podem ser preenchidos
+    protected $table = 'ordem_servicos';
+
     protected $fillable = [
         'viatura_id',
         'mecanico_id',
         'data_servico',
-        'total'
+        'total',
+        'status'
     ];
 
-    // Relacionamento com Veículo (Um para Muitos)
     public function viatura()
     {
         return $this->belongsTo(Viatura::class);
     }
 
-    // Relacionamento com Mecânico (Usuário) (Um para Muitos)
     public function mecanico()
     {
         return $this->belongsTo(Usuario::class, 'mecanico_id');
     }
 
-    // Relacionamento com OrdemServicoServico (Um para Muitos)
     public function servicos()
     {
         return $this->hasMany(OrdemServicoServico::class);
     }
 
-    // Método para calcular o total da ordem de serviço
+    public function pagamento()
+    {
+        return $this->hasOne(Pagamento::class);
+    }
+
     public function calcularTotal()
     {
         return $this->servicos->sum(function($servico) {

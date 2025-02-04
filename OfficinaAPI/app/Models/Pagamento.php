@@ -4,36 +4,36 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Pagamento extends Model
 {
     use HasFactory;
 
-    /**
-     * Os atributos que podem ser preenchidos em massa.
-     *
-     * @var array
-     */
     protected $fillable = [
         'valor',
         'data',
-        'viatura_id',
-        'servico_id',
+        'codigo_referencia',
+        'status',
+        'ordem_servico_id'
     ];
 
-    /**
-     * Obtém a viatura associada ao pagamento.
-     */
-    public function viatura()
+    protected static function boot()
     {
-        return $this->belongsTo(Viatura::class, 'viatura_id');
+        parent::boot();
+
+        // Gera código de referência único antes de criar o pagamento
+        static::creating(function ($pagamento) {
+            do {
+                $codigo = strtoupper(Str::random(10)); // Gera código de 10 caracteres
+            } while (static::where('codigo_referencia', $codigo)->exists());
+            
+            $pagamento->codigo_referencia = $codigo;
+        });
     }
 
-    /**
-     * Obtém o serviço associado ao pagamento.
-     */
-    public function servico()
+    public function ordemServico()
     {
-        return $this->belongsTo(Servico::class, 'servico_id');
+        return $this->belongsTo(OrdemServico::class);
     }
 }

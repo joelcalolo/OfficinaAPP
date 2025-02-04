@@ -1,0 +1,14 @@
+admin@oficina.com
+12345678
+
+    "email": "secretario@oficina.com",
+    "senha": "12345678"
+
+        "email": "tecnico@oficina.com",
+    "senha": "12345678",
+
+        "email": "gerente@oficina.com",
+    "senha": "12345678",
+
+        "email": "cliente@email.com",
+    "senha": "12345678",

@@ -3,82 +3,58 @@
 namespace App\Http\Controllers;
 
 use App\Models\Pagamento;
+use App\Models\OrdemServico;
 use Illuminate\Http\Request;
 
 class PagamentoController extends Controller
 {
-    /**
-     * Listar todos os pagamentos.
-     */
     public function index()
     {
-        $pagamentos = Pagamento::all();
-        return response()->json($pagamentos);
+        $pagamentos = Pagamento::with(['ordemServico.viatura.cliente', 'ordemServico.servicos'])->get();
+        return view('pagamentos.index', compact('pagamentos'));
     }
 
-    /**
-     * Criar um novo pagamento.
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'valor' => 'required|numeric|min:0',
-            'data' => 'required|date',
-            'viatura_id' => 'required|exists:viaturas,id',
-            'servico_id' => 'required|exists:servicos,id',
+            'ordem_servico_id' => 'required|exists:ordem_servicos,id',
         ]);
 
-        $pagamento = Pagamento::create($request->all());
+        $ordemServico = OrdemServico::findOrFail($request->ordem_servico_id);
 
-        return response()->json($pagamento, 201);
+        // Cria um único pagamento para toda a ordem de serviço
+        $pagamento = Pagamento::create([
+            'valor' => $ordemServico->total,
+            'data' => now(),
+            'status' => 'pendente',
+            'ordem_servico_id' => $ordemServico->id,
+        ]);
+
+        return redirect()->back()->with('success', 'Pagamento gerado com sucesso!');
     }
 
-    /**
-     * Obter detalhes de um pagamento.
-     */
+    public function confirmarPagamento(Request $request)
+    {
+        $request->validate([
+            'codigo_referencia' => 'required|exists:pagamentos,codigo_referencia'
+        ]);
+
+        $pagamento = Pagamento::where('codigo_referencia', $request->codigo_referencia)
+            ->where('status', 'pendente')
+            ->firstOrFail();
+
+        $pagamento->update([
+            'status' => 'pago',
+            'data' => now()
+        ]);
+
+        return redirect()->back()->with('success', 'Pagamento confirmado com sucesso!');
+    }
+
     public function show($id)
     {
-        $pagamento = Pagamento::find($id);
-        if (!$pagamento) {
-            return response()->json(['message' => 'Pagamento não encontrado'], 404);
-        }
-        return response()->json($pagamento);
-    }
-
-    /**
-     * Atualizar um pagamento.
-     */
-    public function update(Request $request, $id)
-    {
-        $pagamento = Pagamento::find($id);
-        if (!$pagamento) {
-            return response()->json(['message' => 'Pagamento não encontrado'], 404);
-        }
-
-        $request->validate([
-            'valor' => 'sometimes|numeric|min:0',
-            'data' => 'sometimes|date',
-            'viatura_id' => 'sometimes|exists:viaturas,id',
-            'servico_id' => 'sometimes|exists:servicos,id',
-        ]);
-
-        $pagamento->update($request->all());
-
-        return response()->json($pagamento);
-    }
-
-    /**
-     * Excluir um pagamento.
-     */
-    public function destroy($id)
-    {
-        $pagamento = Pagamento::find($id);
-        if (!$pagamento) {
-            return response()->json(['message' => 'Pagamento não encontrado'], 404);
-        }
-
-        $pagamento->delete();
-
-        return response()->json(['message' => 'Pagamento deletado com sucesso']);
+        $pagamento = Pagamento::with(['ordemServico.viatura.cliente', 'ordemServico.servicos.servico', 'ordemServico.mecanico'])
+            ->findOrFail($id);
+        return view('pagamentos.show', compact('pagamento'));
     }
 }

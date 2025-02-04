@@ -4,26 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Usuario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UsuarioController extends Controller
 {
-    /**
-     * Lista todos os usuários.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
         $usuarios = Usuario::all();
-        return response()->json($usuarios);
+        return view('usuarios.index', compact('usuarios'));
     }
 
-    /**
-     * Armazena um novo usuário.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -31,81 +22,103 @@ class UsuarioController extends Controller
             'email' => 'required|string|email|max:255|unique:usuarios',
             'senha' => 'required|string|min:8',
             'role' => 'required|string',
-            'documento' => 'nullable|string',
+            'documento' => 'required|file|mimes:pdf|max:2048', // Máximo 2MB
         ]);
 
-        $usuario = Usuario::create([
-            'nome' => $request->nome,
-            'email' => $request->email,
-            'senha' => bcrypt($request->senha),
-            'role' => $request->role,
-            'documento' => $request->documento,
-        ]);
+        try {
+            // Upload do documento
+            $documentoPath = null;
+            if ($request->hasFile('documento')) {
+                $documentoPath = $request->file('documento')->store('documentos', 'public');
+            }
 
-        return response()->json($usuario, 201);
-    }
+            $usuario = Usuario::create([
+                'nome' => $request->nome,
+                'email' => $request->email,
+                'senha' => Hash::make($request->senha),
+                'role' => $request->role,
+                'documento' => $documentoPath,
+            ]);
 
-    /**
-     * Exibe os detalhes de um usuário específico.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        $usuario = Usuario::find($id);
-        if (!$usuario) {
-            return response()->json(['message' => 'Usuário não encontrado'], 404);
+            return redirect()->route('usuarios.index')
+                ->with('success', 'Usuário criado com sucesso!');
+        } catch (\Exception $e) {
+            // Se houver erro, remove o arquivo se foi feito upload
+            if ($documentoPath && Storage::disk('public')->exists($documentoPath)) {
+                Storage::disk('public')->delete($documentoPath);
+            }
+
+            return redirect()->route('usuarios.index')
+                ->with('error', 'Erro ao criar usuário: ' . $e->getMessage());
         }
-        return response()->json($usuario);
     }
 
-    /**
-     * Atualiza os dados de um usuário.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $usuario = Usuario::find($id);
-        if (!$usuario) {
-            return response()->json(['message' => 'Usuário não encontrado'], 404);
-        }
+        $usuario = Usuario::findOrFail($id);
 
         $request->validate([
-            'nome' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:usuarios,email,' . $usuario->id,
-            'senha' => 'sometimes|string|min:8',
-            'role' => 'sometimes|string',
-            'documento' => 'nullable|string',
+            'nome' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:usuarios,email,'.$id,
+            'senha' => 'nullable|string|min:8',
+            'role' => 'required|string',
+            'documento' => 'nullable|file|mimes:pdf|max:2048', // Máximo 2MB
         ]);
 
-        if ($request->has('senha')) {
-            $request->merge(['senha' => bcrypt($request->senha)]);
+        try {
+            $data = $request->except(['senha', 'documento']);
+            
+            if ($request->filled('senha')) {
+                $data['senha'] = Hash::make($request->senha);
+            }
+
+            // Upload do novo documento
+            if ($request->hasFile('documento')) {
+                // Remove o documento antigo se existir
+                if ($usuario->documento) {
+                    Storage::disk('public')->delete($usuario->documento);
+                }
+                $data['documento'] = $request->file('documento')->store('documentos', 'public');
+            }
+
+            $usuario->update($data);
+
+            return redirect()->route('usuarios.index')
+                ->with('success', 'Usuário atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->route('usuarios.index')
+                ->with('error', 'Erro ao atualizar usuário: ' . $e->getMessage());
         }
-
-        $usuario->update($request->all());
-
-        return response()->json($usuario);
     }
 
-    /**
-     * Remove um usuário.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        $usuario = Usuario::find($id);
-        if (!$usuario) {
-            return response()->json(['message' => 'Usuário não encontrado'], 404);
+        try {
+            $usuario = Usuario::findOrFail($id);
+            
+            // Remove o documento se existir
+            if ($usuario->documento) {
+                Storage::disk('public')->delete($usuario->documento);
+            }
+            
+            $usuario->delete();
+
+            return redirect()->route('usuarios.index')
+                ->with('success', 'Usuário excluído com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->route('usuarios.index')
+                ->with('error', 'Erro ao excluir usuário: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadDocumento($id)
+    {
+        $usuario = Usuario::findOrFail($id);
+        
+        if (!$usuario->documento) {
+            return back()->with('error', 'Documento não encontrado.');
         }
 
-        $usuario->delete();
-
-        return response()->json(['message' => 'Usuário deletado com sucesso']);
+        return Storage::disk('public')->download($usuario->documento);
     }
 }

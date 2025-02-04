@@ -8,16 +8,29 @@ use Laravel\Sanctum\HasApiTokens;
 class Usuario extends Authenticatable
 {
     use HasApiTokens;
-    protected $table = 'usuarios'; // Define o nome da tabela
-    protected $fillable = ['nome', 'email', 'senha', 'role', 'documento']; // Campos que podem ser preenchidos
-    protected $hidden = ['senha', 'remember_token']; // Campos ocultos
+    
+    protected $table = 'usuarios';
+    
+    protected $fillable = [
+        'nome',
+        'email',
+        'senha',
+        'role',
+        'documento'
+    ];
+    
+    protected $hidden = [
+        'senha',
+        'remember_token'
+    ];
 
     public function getAuthPassword()
     {
-        return $this->senha; // Define o campo de senha como 'senha'
+        return $this->senha;
     }
-    public function veiculos(){
-        return 
-        $this->hasMany(Viatura::class);
+
+    public function veiculos()
+    {
+        return $this->hasMany(Viatura::class, 'cliente_id');
     }
 }

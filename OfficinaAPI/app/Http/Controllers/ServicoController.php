@@ -7,18 +7,12 @@ use Illuminate\Http\Request;
 
 class ServicoController extends Controller
 {
-    /**
-     * Listar todos os serviços.
-     */
     public function index()
     {
         $servicos = Servico::all();
-        return response()->json($servicos);
+        return view('servicos.index', compact('servicos'));
     }
 
-    /**
-     * Criar um novo serviço.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -29,54 +23,32 @@ class ServicoController extends Controller
 
         $servico = Servico::create($request->all());
 
-        return response()->json($servico, 201);
+        return redirect()->route('servicos.index')
+            ->with('success', 'Serviço criado com sucesso!');
     }
 
-    /**
-     * Obter detalhes de um serviço.
-     */
-    public function show($id)
-    {
-        $servico = Servico::find($id);
-        if (!$servico) {
-            return response()->json(['message' => 'Serviço não encontrado'], 404);
-        }
-        return response()->json($servico);
-    }
-
-    /**
-     * Atualizar um serviço.
-     */
     public function update(Request $request, $id)
     {
-        $servico = Servico::find($id);
-        if (!$servico) {
-            return response()->json(['message' => 'Serviço não encontrado'], 404);
-        }
+        $servico = Servico::findOrFail($id);
 
         $request->validate([
-            'nome' => 'sometimes|string|max:255',
-            'descricao' => 'sometimes|string',
-            'preco' => 'sometimes|numeric|min:0',
+            'nome' => 'required|string|max:255',
+            'descricao' => 'required|string',
+            'preco' => 'required|numeric|min:0',
         ]);
 
         $servico->update($request->all());
 
-        return response()->json($servico);
+        return redirect()->route('servicos.index')
+            ->with('success', 'Serviço atualizado com sucesso!');
     }
 
-    /**
-     * Excluir um serviço.
-     */
     public function destroy($id)
     {
-        $servico = Servico::find($id);
-        if (!$servico) {
-            return response()->json(['message' => 'Serviço não encontrado'], 404);
-        }
-
+        $servico = Servico::findOrFail($id);
         $servico->delete();
 
-        return response()->json(['message' => 'Serviço deletado com sucesso']);
+        return redirect()->route('servicos.index')
+            ->with('success', 'Serviço excluído com sucesso!');
     }
 }
